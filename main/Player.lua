@@ -5,37 +5,29 @@ local ws = game:GetService("Workspace")
 
 local lp = plrs.LocalPlayer
 local defgrav = ws.Gravity
+local lastjump = 0
 
 local player = {
-	wsstate = false,
+	wsactive = false,
 	wsval = 16,
 	booststate = false,
 	boostval = 15,
-	jpstate = false,
+	jpactive = false,
 	jpval = 50,
 	gravstate = false,
 	gravval = 196,
 	infjump = false,
+	jumpcd = 0.18,
 	noclip = false
 }
 
-function player:togglewalkspeed(state)
-	self.wsstate = state
+function player:setwalkspeed(val)
+	self.wsval = val
+	self.wsactive = (val ~= 16)
 	local chr = lp.Character
 	local hum = chr and chr:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum.WalkSpeed = state and self.wsval or 16
-	end
-end
-
-function player:setwalkspeed(val)
-	self.wsval = val
-	if self.wsstate then
-		local chr = lp.Character
-		local hum = chr and chr:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.WalkSpeed = val
-		end
+		hum.WalkSpeed = val
 	end
 end
 
@@ -47,25 +39,14 @@ function player:setspeedboost(val)
 	self.boostval = val
 end
 
-function player:togglejumppower(state)
-	self.jpstate = state
+function player:setjumppower(val)
+	self.jpval = val
+	self.jpactive = (val ~= 50)
 	local chr = lp.Character
 	local hum = chr and chr:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum.UseJumpPower = true
-		hum.JumpPower = state and self.jpval or 50
-	end
-end
-
-function player:setjumppower(val)
-	self.jpval = val
-	if self.jpstate then
-		local chr = lp.Character
-		local hum = chr and chr:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.UseJumpPower = true
-			hum.JumpPower = val
-		end
+		hum.JumpPower = val
 	end
 end
 
@@ -107,11 +88,11 @@ rs.Heartbeat:Connect(function(dt)
 	local hrp = chr:FindFirstChild("HumanoidRootPart")
 
 	if hum then
-		if player.wsstate and hum.WalkSpeed ~= player.wsval then
+		if player.wsactive and hum.WalkSpeed ~= player.wsval then
 			hum.WalkSpeed = player.wsval
 		end
 
-		if player.jpstate then
+		if player.jpactive then
 			if not hum.UseJumpPower then
 				hum.UseJumpPower = true
 			end
@@ -144,9 +125,13 @@ end)
 
 uis.JumpRequest:Connect(function()
 	if not player.infjump then return end
+	local now = tick()
+	if now - lastjump < player.jumpcd then return end
+
 	local chr = lp.Character
 	local hum = chr and chr:FindFirstChildOfClass("Humanoid")
 	if hum then
+		lastjump = now
 		hum:ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
