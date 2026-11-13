@@ -1,16 +1,22 @@
 local url = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/main/lib.lua"
 local lib = loadstring(game:HttpGet(url))()
 
-local win = lib:CreateWindow()
+local window = lib:createwindow()
+local maintab = window:createtab("main")
+local testsection = maintab:createsection("controls")
 
-local tbmn = win:CreateTab("main")
-
-local sectst = tbmn:CreateSection("test")
-
-sectst:CreateButton("test button", function()
-	lib:Notify({
-		Title = "crescent",
-		Content = "script loaded",
-		Duration = 3
+testsection:createbutton("test notify", function()
+	lib:notify({
+		title = "crescent",
+		content = "monochrome ui loaded",
+		duration = 3
 	})
-end, "click to test")
+end, "send test notification")
+
+testsection:createtoggle("test toggle", false, function(state)
+	print(state)
+end, "toggle example")
+
+testsection:createslider("test slider", 0, 100, 50, function(val)
+	print(val)
+end, "slider example")
