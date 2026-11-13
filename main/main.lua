@@ -1,47 +1,64 @@
 local base = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/main/"
 local lib = loadstring(game:HttpGet(base .. "lib.lua"))()
 local player = loadstring(game:HttpGet(base .. "Player.lua"))()
+local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
 
 local window = lib:createwindow()
-local playertab = window:createtab("player")
 
-local movesec = playertab:createsection("movement")
-local charsec = playertab:createsection("character")
+local playertab = window:createtab("Player")
+local gametab = window:createtab("Game")
 
-movesec:createslider("walkspeed", 16, 120, 16, function(val)
+local movesec = playertab:createsection("Movement")
+local charsec = playertab:createsection("Character")
+
+movesec:createslider("WalkSpeed", 16, 120, 16, function(val)
 	player:setwalkspeed(val)
-end, "sets and auto locks walkspeed when above 16")
+end, "Sets and auto locks WalkSpeed when above 16")
 
-movesec:createtoggle("speedboost", false, function(state)
+movesec:createtoggle("SpeedBoost", false, function(state)
 	player:togglespeedboost(state)
-end, "cframe movement boost without touching walkspeed")
+end, "CFrame movement boost without touching WalkSpeed")
 
-movesec:createslider("boost power", 1, 80, 15, function(val)
+movesec:createslider("Boost Power", 1, 80, 15, function(val)
 	player:setspeedboost(val)
-end, "extra movement speed multiplier")
+end, "Extra movement speed multiplier")
 
-charsec:createslider("jumppower", 50, 250, 50, function(val)
+charsec:createslider("JumpPower", 50, 250, 50, function(val)
 	player:setjumppower(val)
-end, "sets and auto locks jumppower when above 50")
+end, "Sets and auto locks JumpPower when above 50")
 
-charsec:createtoggle("custom gravity", false, function(state)
+charsec:createtoggle("Custom Gravity", false, function(state)
 	player:togglegravity(state)
-end, "overrides workspace gravity")
+end, "Overrides workspace gravity")
 
-charsec:createslider("gravity", 10, 300, 196, function(val)
+charsec:createslider("Gravity", 10, 300, 196, function(val)
 	player:setgravity(val)
-end, "lower value means higher and floatier jumps")
+end, "Lower value means higher and floatier jumps")
 
-charsec:createtoggle("infinite jump", false, function(state)
+charsec:createtoggle("Infinite Jump", false, function(state)
 	player:toggleinfjump(state)
-end, "jump mid air with safe cooldown")
+end, "Jump mid air with safe cooldown")
 
-charsec:createtoggle("noclip", false, function(state)
+charsec:createtoggle("Noclip", false, function(state)
 	player:togglenoclip(state)
-end, "walk through walls and obstacles")
+end, "Walk through walls and obstacles")
+
+local propssec = gametab:createsection("Props Protection")
+
+propssec:createtoggle("Disable Banana Peels", false, function(state)
+	gamemod:togglebanana(state)
+end, "I HATE BANANAS")
+
+propssec:createtoggle("Disable Red Balls", false, function(state)
+	gamemod:toggleredball(state)
+end, "I HATE RED BALLS")
+
+propssec:createtoggle("Repel Props", false, function(state)
+	gamemod:togglerepel(state)
+end, "Flings nearby unanchored bananas and red balls away using network physics")
 
 lib:notify({
-	title = "crescent",
-	content = "loaded successfully",
+	title = "Crescent",
+	content = "Loaded successfully",
 	duration = 3
 })
