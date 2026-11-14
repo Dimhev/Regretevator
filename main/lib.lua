@@ -931,7 +931,10 @@ function crescent:createwindow(cfg)
 					ts:Create(inputstroke, TweenInfo.new(0.15), { Color = thm.tgloffstk }):Play()
 					ts:Create(label, TweenInfo.new(0.15), { TextColor3 = thm.txtsec }):Play()
 					if callback then
-						callback(inputbox.Text)
+						local result = callback(inputbox.Text)
+						if type(result) == "string" then
+							inputbox.Text = result
+						end
 					end
 				end)
 
