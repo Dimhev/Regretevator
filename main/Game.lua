@@ -173,24 +173,17 @@ function gamemod:toggleautogpu(state)
 					local bpgpu = bp:FindFirstChild("GenerationProcessingUnit")
 					if bpgpu then
 						hum:EquipTool(bpgpu)
-						task.wait(1.15)
+						task.wait(1.05)
 						gpu = char:FindFirstChild("GenerationProcessingUnit")
 					end
 				end
 
 				if gpu and gpu.Parent == char then
-					local lastspun = gpu:GetAttribute("LastSpun")
-					local lifetime = gpu:GetAttribute("LastLifetime") or 5
-					local remaining = lastspun and ((lastspun + lifetime) - ws:GetServerTimeNow()) or 0
-
-					if not lastspun or remaining <= 1.2 then
-						gpu:Activate()
-						task.wait(1.5)
-					end
+					gpu:Activate()
 				end
 			end
 
-			task.wait(0.3)
+			task.wait(0.15)
 		end
 		self.gpurunning = false
 	end)
