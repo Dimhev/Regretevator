@@ -1,11 +1,19 @@
 local ws = game:GetService("Workspace")
+local plrs = game:GetService("Players")
+local rs = game:GetService("RunService")
+
+local lp = plrs.LocalPlayer
 
 local gamemod = {
 	nobanana = false,
 	noredball = false,
 	repelprops = false,
+	tpprops = false,
+	target = nil,
 	propsconn = nil,
-	wsconn = nil
+	wsconn = nil,
+	tpconn = nil,
+	plrconn = nil
 }
 
 local function isbanana(name)
@@ -16,15 +24,29 @@ local function isredball(name)
 	return name == "RedBall"
 end
 
-local function setitemtouch(item, cantouch)
+local function istargetprop(name)
+	return isbanana(name) or isredball(name)
+end
+
+local function disablecollision(item)
 	if item:IsA("BasePart") then
-		item.CanTouch = cantouch
+		item.CanTouch = false
+		item.CanCollide = false
+		item.CanQuery = false
 	end
 	for idx, part in ipairs(item:GetDescendants()) do
 		if part:IsA("BasePart") then
-			part.CanTouch = cantouch
+			part.CanTouch = false
+			part.CanCollide = false
+			part.CanQuery = false
 		end
 	end
+end
+
+local function destroyprop(item)
+	if not item or not item.Parent then return end
+	disablecollision(item)
+	item:Destroy()
 end
 
 local function impulseitem(item)
@@ -36,17 +58,62 @@ local function impulseitem(item)
 	end
 end
 
+local function gettargethrp()
+	local trg = gamemod.target
+	if not trg or not trg.Parent then
+		gamemod.target = nil
+		return nil
+	end
+	local char = trg.Character
+	if not char then return nil end
+	return char:FindFirstChild("HumanoidRootPart")
+end
+
+local function teleportitem(item, hrp)
+	if not hrp then return end
+	disablecollision(item)
+	if item:IsA("BasePart") and not item.Anchored then
+		item.AssemblyLinearVelocity = Vector3.zero
+		item.CFrame = hrp.CFrame
+	elseif item:IsA("Model") then
+		for idx, part in ipairs(item:GetDescendants()) do
+			if part:IsA("BasePart") and not part.Anchored then
+				part.AssemblyLinearVelocity = Vector3.zero
+				part.CFrame = hrp.CFrame
+			end
+		end
+	else
+		local part = item:FindFirstChildWhichIsA("BasePart", true)
+		if part and not part.Anchored then
+			part.AssemblyLinearVelocity = Vector3.zero
+			part.CFrame = hrp.CFrame
+		end
+	end
+end
+
 local function processprop(item)
+	if not item or not item.Parent then return end
+
+	if gamemod.tpprops then
+		local hrp = gettargethrp()
+		if hrp and (istargetprop(item.Name) or item:IsA("BasePart") or item:FindFirstChildWhichIsA("BasePart", true)) then
+			teleportitem(item, hrp)
+			return
+		end
+	end
+
 	if isbanana(item.Name) then
 		if gamemod.nobanana then
-			setitemtouch(item, false)
+			destroyprop(item)
+			return
 		end
 		if gamemod.repelprops then
 			impulseitem(item)
 		end
 	elseif isredball(item.Name) then
 		if gamemod.noredball then
-			setitemtouch(item, false)
+			destroyprop(item)
+			return
 		end
 		if gamemod.repelprops then
 			impulseitem(item)
@@ -61,8 +128,12 @@ local function hookprops(props)
 	end
 	if not props then return end
 
+	for idx, item in ipairs(props:GetChildren()) do
+		task.spawn(processprop, item)
+	end
+
 	gamemod.propsconn = props.ChildAdded:Connect(function(item)
-		task.wait(0.05)
+		task.wait()
 		if item and item.Parent then
 			processprop(item)
 		end
@@ -77,26 +148,94 @@ gamemod.wsconn = ws.ChildAdded:Connect(function(child)
 	end
 end)
 
+gamemod.plrconn = plrs.PlayerRemoving:Connect(function(plr)
+	if gamemod.target == plr then
+		gamemod.target = nil
+	end
+end)
+
+function gamemod:settarget(input)
+	local query = tostring(input or ""):gsub("^%s*(.-)%s*$", "%1"):lower()
+	if #query < 2 then
+		self.target = nil
+		return ""
+	end
+
+	local prefixmatch = nil
+	local submatch = nil
+
+	for idx, plr in ipairs(plrs:GetPlayers()) do
+		if plr ~= lp then
+			local uname = plr.Name:lower()
+			local dname = plr.DisplayName:lower()
+
+			if uname:sub(1, #query) == query or dname:sub(1, #query) == query then
+				prefixmatch = plr
+				break
+			elseif not submatch and (uname:find(query, 1, true) or dname:find(query, 1, true)) then
+				submatch = plr
+			end
+		end
+	end
+
+	local found = prefixmatch or submatch
+	self.target = found
+	return found and found.Name or ""
+end
+
+function gamemod:tppropstotarget()
+	local hrp = gettargethrp()
+	if not hrp then return end
+
+	local props = ws:FindFirstChild("Props")
+	if not props then return end
+
+	for idx, item in ipairs(props:GetChildren()) do
+		teleportitem(item, hrp)
+	end
+end
+
+function gamemod:toggletpprops(state)
+	self.tpprops = state
+
+	if self.tpconn then
+		self.tpconn:Disconnect()
+		self.tpconn = nil
+	end
+
+	if state then
+		self:tppropstotarget()
+		self.tpconn = rs.Heartbeat:Connect(function()
+			if not self.tpprops then return end
+			self:tppropstotarget()
+		end)
+	end
+end
+
 function gamemod:togglebanana(state)
 	self.nobanana = state
+	if not state then return end
+
 	local props = ws:FindFirstChild("Props")
 	if not props then return end
 
 	for idx, item in ipairs(props:GetChildren()) do
 		if isbanana(item.Name) then
-			setitemtouch(item, not state)
+			destroyprop(item)
 		end
 	end
 end
 
 function gamemod:toggleredball(state)
 	self.noredball = state
+	if not state then return end
+
 	local props = ws:FindFirstChild("Props")
 	if not props then return end
 
 	for idx, item in ipairs(props:GetChildren()) do
 		if isredball(item.Name) then
-			setitemtouch(item, not state)
+			destroyprop(item)
 		end
 	end
 end
@@ -109,13 +248,16 @@ function gamemod:togglerepel(state)
 	if not props then return end
 
 	for idx, item in ipairs(props:GetChildren()) do
-		if isbanana(item.Name) or isredball(item.Name) then
+		if istargetprop(item.Name) then
 			impulseitem(item)
 		end
 	end
 end
 
 function gamemod:destroy()
+	self.tpprops = false
+	self.target = nil
+
 	if self.propsconn then
 		self.propsconn:Disconnect()
 		self.propsconn = nil
@@ -123,6 +265,14 @@ function gamemod:destroy()
 	if self.wsconn then
 		self.wsconn:Disconnect()
 		self.wsconn = nil
+	end
+	if self.tpconn then
+		self.tpconn:Disconnect()
+		self.tpconn = nil
+	end
+	if self.plrconn then
+		self.plrconn:Disconnect()
+		self.plrconn = nil
 	end
 end
 
