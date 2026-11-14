@@ -5,60 +5,95 @@ local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
 
 local window = lib:createwindow()
 
-local playertab = window:createtab("Player")
-local gametab = window:createtab("Game")
+local playertab = window:createtab("player")
+local gametab = window:createtab("game")
 
-local movesec = playertab:createsection("Movement")
-local charsec = playertab:createsection("Character")
+local movesec = playertab:createsection("movement")
+local charsec = playertab:createsection("character")
 
-movesec:createslider("WalkSpeed", 16, 120, 16, function(val)
+movesec:createslider("walkspeed", 16, 120, 16, function(val)
 	player:setwalkspeed(val)
-end, "Sets and auto locks WalkSpeed when above 16")
+end, "sets and auto locks walkspeed when above 16")
 
-movesec:createtoggle("SpeedBoost", false, function(state)
+movesec:createtextbox("custom walkspeed", "16 - 120", "16", function(val)
+	local num = tonumber(val)
+	if num then
+		player:setwalkspeed(num)
+	end
+end, "type exact walkspeed value")
+
+movesec:createtoggle("speedboost", false, function(state)
 	player:togglespeedboost(state)
-end, "CFrame movement boost without touching WalkSpeed")
+end, "cframe movement boost without touching walkspeed")
 
-movesec:createslider("Boost Power", 1, 80, 15, function(val)
+movesec:createslider("boost power", 1, 80, 15, function(val)
 	player:setspeedboost(val)
-end, "Extra movement speed multiplier")
+end, "extra movement speed multiplier")
 
-charsec:createslider("JumpPower", 50, 250, 50, function(val)
+charsec:createslider("jumppower", 50, 250, 50, function(val)
 	player:setjumppower(val)
-end, "Sets and auto locks JumpPower when above 50")
+end, "sets and auto locks jumppower when above 50")
 
-charsec:createtoggle("Custom Gravity", false, function(state)
+charsec:createtextbox("custom jumppower", "50 - 250", "50", function(val)
+	local num = tonumber(val)
+	if num then
+		player:setjumppower(num)
+	end
+end, "type exact jumppower value")
+
+charsec:createtoggle("custom gravity", false, function(state)
 	player:togglegravity(state)
-end, "Overrides workspace gravity")
+end, "overrides workspace gravity")
 
-charsec:createslider("Gravity", 10, 300, 196, function(val)
+charsec:createslider("gravity", 10, 300, 196, function(val)
 	player:setgravity(val)
-end, "Lower value means higher and floatier jumps")
+end, "lower value means higher and floatier jumps")
 
-charsec:createtoggle("Infinite Jump", false, function(state)
+charsec:createtoggle("infinite jump", false, function(state)
 	player:toggleinfjump(state)
-end, "Jump mid air with safe cooldown")
+end, "jump mid air with safe cooldown")
 
-charsec:createtoggle("Noclip", false, function(state)
+charsec:createtoggle("noclip", false, function(state)
 	player:togglenoclip(state)
-end, "Walk through walls and obstacles")
+end, "walk through walls and obstacles")
 
-local propssec = gametab:createsection("Props Protection")
+local propssec = gametab:createsection("props protection")
+local targetsec = gametab:createsection("target props")
 
-propssec:createtoggle("Disable Banana Peels", false, function(state)
+propssec:createtoggle("disable banana peels", false, function(state)
 	gamemod:togglebanana(state)
-end, "I HATE BANANAS")
+end, "destroys banana peels and removes collision")
 
-propssec:createtoggle("Disable Red Balls", false, function(state)
+propssec:createtoggle("disable red balls", false, function(state)
 	gamemod:toggleredball(state)
-end, "I HATE RED BALLS")
+end, "destroys red balls and removes collision")
 
-propssec:createtoggle("Repel Props", false, function(state)
+propssec:createtoggle("repel props", false, function(state)
 	gamemod:togglerepel(state)
-end, "Flings nearby unanchored bananas and red balls away using network physics")
+end, "flings nearby unanchored bananas and red balls away")
+
+targetsec:createtextbox("target player", "", function(val)
+	local matched = gamemod:settarget(val)
+	if matched ~= "" then
+		lib:notify({
+			title = "target locked",
+			content = matched,
+			duration = 2
+		})
+	end
+	return matched
+end, "auto completes player name or display name by 2-3 letters")
+
+targetsec:createtoggle("loop tp props", false, function(state)
+	gamemod:toggletpprops(state)
+end, "continuously teleports props to target player")
+
+targetsec:createbutton("tp props once", function()
+	gamemod:tppropstotarget()
+end, "teleports all current props to target player")
 
 lib:notify({
-	title = "Crescent",
-	content = "Loaded successfully",
+	title = "crescent",
+	content = "loaded successfully",
 	duration = 3
 })
