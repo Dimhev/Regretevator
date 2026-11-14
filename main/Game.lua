@@ -3,22 +3,19 @@ local plrs = game:GetService("Players")
 local rs = game:GetService("RunService")
 
 local lp = plrs.LocalPlayer
-local fti = firetouchinterest
 
 local gamemod = {
 	nobanana = false,
 	noredball = false,
 	repelprops = false,
 	tpprops = false,
-	autocoins = false,
+	autogpu = false,
+	gpurunning = false,
 	target = nil,
 	propsconn = nil,
 	wsconn = nil,
 	tpconn = nil,
-	plrconn = nil,
-	coinconn = nil,
-	coinaddconn = nil,
-	coinslist = setmetatable({}, { __mode = "k" })
+	plrconn = nil
 }
 
 local function isbanana(name)
@@ -63,12 +60,6 @@ local function impulseitem(item)
 	end
 end
 
-local function getlphrp()
-	local char = lp and lp.Character
-	if not char then return nil end
-	return char:FindFirstChild("HumanoidRootPart")
-end
-
 local function gettargethrp()
 	local trg = gamemod.target
 	if not trg or not trg.Parent then
@@ -99,67 +90,6 @@ local function teleportitem(item, hrp)
 			part.AssemblyLinearVelocity = Vector3.zero
 			part.CFrame = hrp.CFrame
 		end
-	end
-end
-
-local function isinsidecoins(obj)
-	local parent = obj.Parent
-	while parent and parent ~= ws do
-		if parent.Name == "Coins" then
-			return true
-		end
-		parent = parent.Parent
-	end
-	return false
-end
-
-local function registercoin(obj)
-	if obj:IsA("BasePart") then
-		obj.CanCollide = false
-		gamemod.coinslist[obj] = true
-	end
-end
-
-local function registercoincontainer(container)
-	for idx, desc in ipairs(container:GetDescendants()) do
-		registercoin(desc)
-	end
-end
-
-local function scancoins()
-	table.clear(gamemod.coinslist)
-	for idx, obj in ipairs(ws:GetDescendants()) do
-		if obj.Name == "Coins" then
-			registercoincontainer(obj)
-		end
-	end
-end
-
-local function pullcoin(part, hrp, instant)
-	if not part or not part.Parent then
-		gamemod.coinslist[part] = nil
-		return
-	end
-
-	part.CanCollide = false
-	if not part.Anchored then
-		part.AssemblyLinearVelocity = Vector3.zero
-	end
-
-	if instant then
-		part.CFrame = hrp.CFrame
-	else
-		local dist = (part.Position - hrp.Position).Magnitude
-		if dist < 5 then
-			part.CFrame = hrp.CFrame
-		else
-			part.CFrame = part.CFrame:Lerp(hrp.CFrame, 0.35)
-		end
-	end
-
-	if fti then
-		pcall(fti, hrp, part, 0)
-		pcall(fti, hrp, part, 1)
 	end
 end
 
@@ -226,53 +156,43 @@ gamemod.plrconn = plrs.PlayerRemoving:Connect(function(plr)
 	end
 end)
 
-function gamemod:collectcoinsonce()
-	scancoins()
-	local hrp = getlphrp()
-	if not hrp then return end
+function gamemod:toggleautogpu(state)
+	self.autogpu = state
+	if not state or self.gpurunning then return end
 
-	for part in pairs(self.coinslist) do
-		pullcoin(part, hrp, true)
-	end
-end
+	self.gpurunning = true
+	task.spawn(function()
+		while self.autogpu do
+			local char = lp and lp.Character
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			local bp = lp and lp:FindFirstChild("Backpack")
 
-function gamemod:toggleautocoins(state)
-	self.autocoins = state
+			if char and hum and hum.Health > 0 and not lp:HasTag("Spectators") then
+				local gpu = char:FindFirstChild("GenerationProcessingUnit")
+				if not gpu and bp then
+					local bpgpu = bp:FindFirstChild("GenerationProcessingUnit")
+					if bpgpu then
+						hum:EquipTool(bpgpu)
+						task.wait(1.15)
+						gpu = char:FindFirstChild("GenerationProcessingUnit")
+					end
+				end
 
-	if self.coinconn then
-		self.coinconn:Disconnect()
-		self.coinconn = nil
-	end
-	if self.coinaddconn then
-		self.coinaddconn:Disconnect()
-		self.coinaddconn = nil
-	end
-	table.clear(self.coinslist)
+				if gpu and gpu.Parent == char then
+					local lastspun = gpu:GetAttribute("LastSpun")
+					local lifetime = gpu:GetAttribute("LastLifetime") or 5
+					local remaining = lastspun and ((lastspun + lifetime) - ws:GetServerTimeNow()) or 0
 
-	if not state then return end
-
-	scancoins()
-
-	self.coinaddconn = ws.DescendantAdded:Connect(function(desc)
-		if not self.autocoins then return end
-		if desc.Name == "Coins" then
-			task.wait()
-			if desc and desc.Parent then
-				registercoincontainer(desc)
+					if not lastspun or remaining <= 1.2 then
+						gpu:Activate()
+						task.wait(1.5)
+					end
+				end
 			end
-		elseif desc:IsA("BasePart") and isinsidecoins(desc) then
-			registercoin(desc)
-		end
-	end)
 
-	self.coinconn = rs.Heartbeat:Connect(function()
-		if not self.autocoins then return end
-		local hrp = getlphrp()
-		if not hrp then return end
-
-		for part in pairs(self.coinslist) do
-			pullcoin(part, hrp, false)
+			task.wait(0.3)
 		end
+		self.gpurunning = false
 	end)
 end
 
@@ -378,7 +298,7 @@ end
 
 function gamemod:destroy()
 	self.tpprops = false
-	self.autocoins = false
+	self.autogpu = false
 	self.target = nil
 
 	if self.propsconn then
@@ -397,15 +317,6 @@ function gamemod:destroy()
 		self.plrconn:Disconnect()
 		self.plrconn = nil
 	end
-	if self.coinconn then
-		self.coinconn:Disconnect()
-		self.coinconn = nil
-	end
-	if self.coinaddconn then
-		self.coinaddconn:Disconnect()
-		self.coinaddconn = nil
-	end
-	table.clear(self.coinslist)
 end
 
 return gamemod
