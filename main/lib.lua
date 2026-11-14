@@ -66,7 +66,7 @@ function crescent:notify(data)
 		create("UIListLayout", {
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			VerticalAlignment = Enum.VerticalAlignment.Bottom,
-			Padding = UDim.new(0, 6),
+			Padding = UDim.new(0, 8),
 			Parent = container
 		})
 	end
@@ -193,7 +193,7 @@ function crescent:createwindow(cfg)
 
 	local main = create("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Size = UDim2.new(0, 560, 0, 380),
+		Size = UDim2.new(0, 640, 0, 460),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		BackgroundColor3 = thm.bg,
 		BorderSizePixel = 0,
@@ -213,7 +213,7 @@ function crescent:createwindow(cfg)
 	})
 
 	local topbar = create("Frame", {
-		Size = UDim2.new(1, 0, 0, 38),
+		Size = UDim2.new(1, 0, 0, 40),
 		BackgroundColor3 = thm.tb,
 		BorderSizePixel = 0,
 		Parent = main
@@ -304,8 +304,8 @@ function crescent:createwindow(cfg)
 	end)
 
 	local sidebar = create("Frame", {
-		Position = UDim2.new(0, 0, 0, 39),
-		Size = UDim2.new(0, 120, 1, -63),
+		Position = UDim2.new(0, 0, 0, 41),
+		Size = UDim2.new(0, 135, 1, -67),
 		BackgroundColor3 = thm.sb,
 		BorderSizePixel = 0,
 		Parent = main
@@ -320,8 +320,8 @@ function crescent:createwindow(cfg)
 	})
 
 	local tabcontainer = create("ScrollingFrame", {
-		Position = UDim2.new(0, 6, 0, 6),
-		Size = UDim2.new(1, -13, 1, -12),
+		Position = UDim2.new(0, 8, 0, 8),
+		Size = UDim2.new(1, -17, 1, -16),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ScrollBarThickness = 0,
@@ -332,21 +332,21 @@ function crescent:createwindow(cfg)
 
 	create("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
-		Padding = UDim.new(0, 4),
+		Padding = UDim.new(0, 6),
 		Parent = tabcontainer
 	})
 
 	local contentholder = create("Frame", {
-		Position = UDim2.new(0, 120, 0, 39),
-		Size = UDim2.new(1, -120, 1, -63),
+		Position = UDim2.new(0, 135, 0, 41),
+		Size = UDim2.new(1, -135, 1, -67),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Parent = main
 	})
 
 	local footer = create("Frame", {
-		Position = UDim2.new(0, 0, 1, -24),
-		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.new(0, 0, 1, -26),
+		Size = UDim2.new(1, 0, 0, 26),
 		BackgroundColor3 = thm.ftr,
 		BorderSizePixel = 0,
 		Parent = main
@@ -445,7 +445,7 @@ function crescent:createwindow(cfg)
 
 	function window:createtab(tabname)
 		local tabbtn = create("TextButton", {
-			Size = UDim2.new(1, 0, 0, 30),
+			Size = UDim2.new(1, 0, 0, 32),
 			BackgroundTransparency = 1,
 			BackgroundColor3 = thm.tabact,
 			BorderSizePixel = 0,
@@ -474,36 +474,36 @@ function crescent:createwindow(cfg)
 			Parent = contentholder
 		})
 		create("UIPadding", {
-			PaddingTop = UDim.new(0, 10),
-			PaddingBottom = UDim.new(0, 10),
-			PaddingLeft = UDim.new(0, 10),
-			PaddingRight = UDim.new(0, 10),
+			PaddingTop = UDim.new(0, 14),
+			PaddingBottom = UDim.new(0, 14),
+			PaddingLeft = UDim.new(0, 14),
+			PaddingRight = UDim.new(0, 14),
 			Parent = page
 		})
 
 		local colleft = create("Frame", {
 			Position = UDim2.new(0, 0, 0, 0),
-			Size = UDim2.new(0.5, -5, 0, 0),
+			Size = UDim2.new(0.5, -7, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			Parent = page
 		})
 		create("UIListLayout", {
 			SortOrder = Enum.SortOrder.LayoutOrder,
-			Padding = UDim.new(0, 8),
+			Padding = UDim.new(0, 12),
 			Parent = colleft
 		})
 
 		local colright = create("Frame", {
-			Position = UDim2.new(0.5, 5, 0, 0),
-			Size = UDim2.new(0.5, -5, 0, 0),
+			Position = UDim2.new(0.5, 7, 0, 0),
+			Size = UDim2.new(0.5, -7, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			Parent = page
 		})
 		create("UIListLayout", {
 			SortOrder = Enum.SortOrder.LayoutOrder,
-			Padding = UDim.new(0, 8),
+			Padding = UDim.new(0, 12),
 			Parent = colright
 		})
 
@@ -554,10 +554,10 @@ function crescent:createwindow(cfg)
 				Parent = card
 			})
 			create("UIPadding", {
-				PaddingTop = UDim.new(0, 8),
-				PaddingBottom = UDim.new(0, 8),
-				PaddingLeft = UDim.new(0, 9),
-				PaddingRight = UDim.new(0, 9),
+				PaddingTop = UDim.new(0, 12),
+				PaddingBottom = UDim.new(0, 12),
+				PaddingLeft = UDim.new(0, 12),
+				PaddingRight = UDim.new(0, 12),
 				Parent = card
 			})
 
@@ -573,7 +573,7 @@ function crescent:createwindow(cfg)
 			})
 
 			create("Frame", {
-				Position = UDim2.new(0, 0, 0, 22),
+				Position = UDim2.new(0, 0, 0, 24),
 				Size = UDim2.new(1, 0, 0, 1),
 				BackgroundColor3 = thm.crddiv,
 				BorderSizePixel = 0,
@@ -582,14 +582,14 @@ function crescent:createwindow(cfg)
 
 			local list = create("Frame", {
 				Size = UDim2.new(1, 0, 0, 0),
-				Position = UDim2.new(0, 0, 0, 28),
+				Position = UDim2.new(0, 0, 0, 32),
 				AutomaticSize = Enum.AutomaticSize.Y,
 				BackgroundTransparency = 1,
 				Parent = card
 			})
 			create("UIListLayout", {
 				SortOrder = Enum.SortOrder.LayoutOrder,
-				Padding = UDim.new(0, 5),
+				Padding = UDim.new(0, 10),
 				Parent = list
 			})
 
@@ -602,7 +602,7 @@ function crescent:createwindow(cfg)
 				local state = defaultval or false
 
 				local row = create("Frame", {
-					Size = UDim2.new(1, 0, 0, 30),
+					Size = UDim2.new(1, 0, 0, 34),
 					BackgroundColor3 = thm.rowhvr,
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
@@ -610,8 +610,8 @@ function crescent:createwindow(cfg)
 				})
 				create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = row })
 				create("UIPadding", {
-					PaddingLeft = UDim.new(0, 6),
-					PaddingRight = UDim.new(0, 6),
+					PaddingLeft = UDim.new(0, 8),
+					PaddingRight = UDim.new(0, 8),
 					Parent = row
 				})
 
@@ -690,7 +690,7 @@ function crescent:createwindow(cfg)
 
 			function section:createbutton(name, callback, desc)
 				local row = create("Frame", {
-					Size = UDim2.new(1, 0, 0, 30),
+					Size = UDim2.new(1, 0, 0, 34),
 					BackgroundTransparency = 1,
 					Parent = self.list
 				})
@@ -740,7 +740,7 @@ function crescent:createwindow(cfg)
 				local curval = math.clamp(defaultval or minval, minval, maxval)
 
 				local box = create("Frame", {
-					Size = UDim2.new(1, 0, 0, 44),
+					Size = UDim2.new(1, 0, 0, 50),
 					BackgroundColor3 = thm.rowhvr,
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
@@ -748,9 +748,10 @@ function crescent:createwindow(cfg)
 				})
 				create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = box })
 				create("UIPadding", {
-					PaddingTop = UDim.new(0, 4),
-					PaddingLeft = UDim.new(0, 6),
-					PaddingRight = UDim.new(0, 6),
+					PaddingTop = UDim.new(0, 6),
+					PaddingBottom = UDim.new(0, 6),
+					PaddingLeft = UDim.new(0, 8),
+					PaddingRight = UDim.new(0, 8),
 					Parent = box
 				})
 
@@ -778,7 +779,7 @@ function crescent:createwindow(cfg)
 				})
 
 				local bar = create("Frame", {
-					Position = UDim2.new(0, 0, 0, 24),
+					Position = UDim2.new(0, 0, 0, 26),
 					Size = UDim2.new(1, 0, 0, 10),
 					BackgroundColor3 = thm.tgloff,
 					BorderSizePixel = 0,
@@ -802,7 +803,7 @@ function crescent:createwindow(cfg)
 				create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = fill })
 
 				local hittrigger = create("TextButton", {
-					Position = UDim2.new(0, 0, 0, 20),
+					Position = UDim2.new(0, 0, 0, 22),
 					Size = UDim2.new(1, 0, 0, 18),
 					BackgroundTransparency = 1,
 					Text = "",
@@ -856,6 +857,95 @@ function crescent:createwindow(cfg)
 				end)
 
 				return box
+			end
+
+			function section:createtextbox(name, placeholder, defaultval, callback, desc)
+				if type(defaultval) == "function" then
+					desc = callback
+					callback = defaultval
+					defaultval = ""
+				end
+
+				local row = create("Frame", {
+					Size = UDim2.new(1, 0, 0, 36),
+					BackgroundColor3 = thm.rowhvr,
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					Parent = self.list
+				})
+				create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = row })
+				create("UIPadding", {
+					PaddingLeft = UDim.new(0, 8),
+					PaddingRight = UDim.new(0, 8),
+					Parent = row
+				})
+
+				local label = create("TextLabel", {
+					Size = UDim2.new(1, -110, 1, 0),
+					BackgroundTransparency = 1,
+					Font = Enum.Font.GothamMedium,
+					Text = name,
+					TextColor3 = thm.txtsec,
+					TextSize = 12,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Parent = row
+				})
+
+				local inputbg = create("Frame", {
+					Size = UDim2.new(0, 100, 0, 24),
+					Position = UDim2.new(1, -100, 0.5, -12),
+					BackgroundColor3 = thm.tgloff,
+					BorderSizePixel = 0,
+					Parent = row
+				})
+				create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = inputbg })
+				local inputstroke = create("UIStroke", {
+					Color = thm.tgloffstk,
+					Thickness = 1.2,
+					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+					Parent = inputbg
+				})
+
+				local inputbox = create("TextBox", {
+					Size = UDim2.new(1, -12, 1, 0),
+					Position = UDim2.new(0, 6, 0, 0),
+					BackgroundTransparency = 1,
+					Font = Enum.Font.GothamMedium,
+					Text = defaultval and tostring(defaultval) or "",
+					PlaceholderText = placeholder or "value...",
+					PlaceholderColor3 = thm.txtmut,
+					TextColor3 = thm.txtpri,
+					TextSize = 11,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					ClearTextOnFocus = false,
+					ClipsDescendants = true,
+					Parent = inputbg
+				})
+
+				inputbox.Focused:Connect(function()
+					ts:Create(inputstroke, TweenInfo.new(0.15), { Color = thm.accstk }):Play()
+					ts:Create(label, TweenInfo.new(0.15), { TextColor3 = thm.txtpri }):Play()
+				end)
+
+				inputbox.FocusLost:Connect(function()
+					ts:Create(inputstroke, TweenInfo.new(0.15), { Color = thm.tgloffstk }):Play()
+					ts:Create(label, TweenInfo.new(0.15), { TextColor3 = thm.txtsec }):Play()
+					if callback then
+						callback(inputbox.Text)
+					end
+				end)
+
+				row.MouseEnter:Connect(function()
+					ts:Create(row, TweenInfo.new(0.15), { BackgroundTransparency = 0.4 }):Play()
+					if desc then showtooltip(desc) end
+				end)
+
+				row.MouseLeave:Connect(function()
+					ts:Create(row, TweenInfo.new(0.15), { BackgroundTransparency = 1 }):Play()
+					hidetooltip()
+				end)
+
+				return row
 			end
 
 			return section
