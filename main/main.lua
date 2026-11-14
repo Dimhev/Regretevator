@@ -59,7 +59,7 @@ end, "walk through walls and obstacles")
 
 local propssec = gametab:createsection("props protection")
 local targetsec = gametab:createsection("target props")
-local coinssec = gametab:createsection("coins")
+local farmsec = gametab:createsection("farming")
 
 propssec:createtoggle("disable banana peels", false, function(state)
 	gamemod:togglebanana(state)
@@ -93,13 +93,9 @@ targetsec:createbutton("tp props once", function()
 	gamemod:tppropstotarget()
 end, "teleports all current props to target player")
 
-coinssec:createtoggle("auto collect coins", false, function(state)
-	gamemod:toggleautocoins(state)
-end, "experimental magnet that pulls all map coins to you")
-
-coinssec:createbutton("collect coins once", function()
-	gamemod:collectcoinsonce()
-end, "instantly pulls all current map coins once")
+farmsec:createtoggle("auto spin gpu", false, function(state)
+	gamemod:toggleautogpu(state)
+end, "keeps gpu equipped and calmly maintains spin charge")
 
 lib:notify({
 	title = "crescent",
