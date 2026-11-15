@@ -32,6 +32,23 @@ local function istargetprop(name)
 	return isbanana(name) or isredball(name)
 end
 
+local function isvalidworldprop(item)
+	if not item or not item.Parent then return false end
+
+	if item:IsA("Tool") or item:FindFirstAncestorOfClass("Tool") then
+		return false
+	end
+
+	for _, plr in ipairs(plrs:GetPlayers()) do
+		local char = plr.Character
+		if char and (item == char or item:IsDescendantOf(char)) then
+			return false
+		end
+	end
+
+	return true
+end
+
 local function disarmparttouch(part)
 	if part:IsA("BasePart") then
 		part.CanTouch = false
@@ -49,7 +66,7 @@ local function disarmparttouch(part)
 end
 
 local function disarmbanana(item)
-	if not item or not item.Parent then return end
+	if not isvalidworldprop(item) then return end
 	disarmparttouch(item)
 	for _, desc in ipairs(item:GetDescendants()) do
 		disarmparttouch(desc)
@@ -72,12 +89,13 @@ local function disablecollision(item)
 end
 
 local function destroyprop(item)
-	if not item or not item.Parent then return end
+	if not isvalidworldprop(item) then return end
 	disablecollision(item)
 	item:Destroy()
 end
 
 local function impulseitem(item)
+	if not isvalidworldprop(item) then return end
 	local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
 	if part and not part.Anchored then
 		local dir = Vector3.new(math.random(-180, 180), 450, math.random(-180, 180))
@@ -98,7 +116,7 @@ local function gettargethrp()
 end
 
 local function teleportitem(item, hrp)
-	if not hrp then return end
+	if not hrp or not isvalidworldprop(item) then return end
 	disablecollision(item)
 	if item:IsA("BasePart") and not item.Anchored then
 		item.AssemblyLinearVelocity = Vector3.zero
@@ -120,7 +138,10 @@ local function teleportitem(item, hrp)
 end
 
 local function processprop(item)
-	if not item or not item.Parent then return end
+	if not isvalidworldprop(item) then
+		trackedbananas[item] = nil
+		return
+	end
 
 	if isbanana(item.Name) then
 		trackedbananas[item] = true
@@ -161,7 +182,7 @@ end
 
 local function scanlight()
 	for _, item in ipairs(ws:GetChildren()) do
-		if isbanana(item.Name) then
+		if isbanana(item.Name) and isvalidworldprop(item) then
 			processprop(item)
 		end
 	end
@@ -174,7 +195,7 @@ local function scanlight()
 	end
 
 	for banana in pairs(trackedbananas) do
-		if banana and banana.Parent then
+		if isvalidworldprop(banana) then
 			if gamemod.nobanana then
 				disarmbanana(banana)
 			end
@@ -192,7 +213,7 @@ gamemod.wsaddconn = ws.DescendantAdded:Connect(function(desc)
 	if name == "TouchInterest" or desc:IsA("TouchTransmitter") then
 		if gamemod.nobanana then
 			local p = desc.Parent
-			if p and (isbanana(p.Name) or (p.Parent and isbanana(p.Parent.Name))) then
+			if p and (isbanana(p.Name) or (p.Parent and isbanana(p.Parent.Name))) and isvalidworldprop(p) then
 				task.defer(disarmparttouch, desc)
 			end
 		end
@@ -200,8 +221,12 @@ gamemod.wsaddconn = ws.DescendantAdded:Connect(function(desc)
 	end
 
 	if isbanana(name) then
-		trackedbananas[desc] = true
-		task.defer(processprop, desc)
+		task.defer(function()
+			if isvalidworldprop(desc) then
+				trackedbananas[desc] = true
+				processprop(desc)
+			end
+		end)
 		return
 	end
 
@@ -297,7 +322,7 @@ function gamemod:tppropstotarget()
 	end
 
 	for banana in pairs(trackedbananas) do
-		if banana and banana.Parent then
+		if isvalidworldprop(banana) then
 			teleportitem(banana, hrp)
 		else
 			trackedbananas[banana] = nil
@@ -356,7 +381,7 @@ function gamemod:togglerepel(state)
 	end
 
 	for banana in pairs(trackedbananas) do
-		if banana and banana.Parent then
+		if isvalidworldprop(banana) then
 			impulseitem(banana)
 		else
 			trackedbananas[banana] = nil
