@@ -5,100 +5,107 @@ local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
 
 local window = lib:createwindow()
 
-local playertab = window:createtab("player")
-local gametab = window:createtab("game")
+local playertab = window:createtab("Player")
+local gametab = window:createtab("Game")
+local funtab = window:createtab("Fun")
+local autofarmtab = window:createtab("AutoFarm")
+local visualstab = window:createtab("Visuals")
 
-local movesec = playertab:createsection("movement")
-local charsec = playertab:createsection("character")
+local movesec = playertab:createsection("Movement")
+local charsec = playertab:createsection("Character")
 
-movesec:createslider("walkspeed", 16, 120, 16, function(val)
+movesec:createslider("WalkSpeed", 16, 120, 16, function(val)
 	player:setwalkspeed(val)
-end, "sets and auto locks walkspeed when above 16")
+end, "Sets and auto locks WalkSpeed when above 16")
 
-movesec:createtextbox("custom walkspeed", "16 - 120", "16", function(val)
+movesec:createtextbox("Custom WalkSpeed", "16 - 120", "16", function(val)
 	local num = tonumber(val)
 	if num then
 		player:setwalkspeed(num)
 	end
-end, "type exact walkspeed value")
+end, "Type exact WalkSpeed value")
 
-movesec:createtoggle("speedboost", false, function(state)
+movesec:createtoggle("SpeedBoost", false, function(state)
 	player:togglespeedboost(state)
-end, "cframe movement boost without touching walkspeed")
+end, "CFrame movement boost without touching WalkSpeed")
 
-movesec:createslider("boost power", 1, 80, 15, function(val)
+movesec:createslider("Boost Power", 1, 80, 15, function(val)
 	player:setspeedboost(val)
-end, "extra movement speed multiplier")
+end, "Extra movement speed multiplier")
 
-charsec:createslider("jumppower", 50, 250, 50, function(val)
+charsec:createslider("JumpPower", 50, 250, 50, function(val)
 	player:setjumppower(val)
-end, "sets and auto locks jumppower when above 50")
+end, "Sets and auto locks JumpPower when above 50")
 
-charsec:createtextbox("custom jumppower", "50 - 250", "50", function(val)
+charsec:createtextbox("Custom JumpPower", "50 - 250", "50", function(val)
 	local num = tonumber(val)
 	if num then
 		player:setjumppower(num)
 	end
-end, "type exact jumppower value")
+end, "Type exact JumpPower value")
 
-charsec:createtoggle("custom gravity", false, function(state)
+charsec:createtoggle("Custom Gravity", false, function(state)
 	player:togglegravity(state)
-end, "overrides workspace gravity")
+end, "Overrides workspace gravity")
 
-charsec:createslider("gravity", 10, 300, 196, function(val)
+charsec:createslider("Gravity", 10, 300, 196, function(val)
 	player:setgravity(val)
-end, "lower value means higher and floatier jumps")
+end, "Lower value means higher and floatier jumps")
 
-charsec:createtoggle("infinite jump", false, function(state)
+charsec:createtoggle("Infinite Jump", false, function(state)
 	player:toggleinfjump(state)
-end, "jump mid air with safe cooldown")
+end, "Jump mid-air with safe cooldown")
 
-charsec:createtoggle("noclip", false, function(state)
+charsec:createtoggle("Noclip", false, function(state)
 	player:togglenoclip(state)
-end, "walk through walls and obstacles")
+end, "Walk through walls and obstacles")
 
-local propssec = gametab:createsection("props protection")
-local targetsec = gametab:createsection("target props")
-local farmsec = gametab:createsection("farming")
+local propssec = gametab:createsection("Props Protection")
 
-propssec:createtoggle("disable banana peels", false, function(state)
+propssec:createtoggle("Disable Banana Peels", false, function(state)
 	gamemod:togglebanana(state)
-end, "destroys banana peels and removes collision")
+end, "Disables banana touch triggers across the map")
 
-propssec:createtoggle("disable red balls", false, function(state)
+propssec:createtoggle("Disable Red Balls", false, function(state)
 	gamemod:toggleredball(state)
-end, "destroys red balls and removes collision")
+end, "Destroys red balls and removes collision")
 
-propssec:createtoggle("repel props", false, function(state)
+propssec:createtoggle("Repel Props", false, function(state)
 	gamemod:togglerepel(state)
-end, "flings nearby unanchored bananas and red balls away")
+end, "Flings nearby unanchored bananas and red balls away")
 
-targetsec:createtextbox("target player", "2-3 letters...", "", function(val)
+local targetsec = funtab:createsection("Target Props")
+
+targetsec:createtextbox("Target Player", "2-3 letters...", "", function(val)
 	local matched = gamemod:settarget(val)
 	if matched ~= "" then
 		lib:notify({
-			title = "target locked",
+			title = "Target Locked",
 			content = matched,
 			duration = 2
 		})
 	end
 	return matched
-end, "auto completes player name or display name by 2-3 letters")
+end, "Auto-completes player name or display name by 2-3 letters")
 
-targetsec:createtoggle("loop tp props", false, function(state)
+targetsec:createtoggle("Loop TP Props", false, function(state)
 	gamemod:toggletpprops(state)
-end, "continuously teleports props to target player")
+end, "Continuously teleports bananas and red balls to target player")
 
-targetsec:createbutton("tp props once", function()
+targetsec:createbutton("TP Props Once", function()
 	gamemod:tppropstotarget()
-end, "teleports all current props to target player")
+end, "Teleports all current bananas and red balls to target player")
 
-farmsec:createtoggle("auto spin gpu", false, function(state)
+local farmsec = autofarmtab:createsection("GPU Farm")
+
+farmsec:createtoggle("Auto Spin GPU", false, function(state)
 	gamemod:toggleautogpu(state)
-end, "keeps gpu equipped and calmly maintains spin charge")
+end, "Equips GPU and activates it automatically after cooldown")
+
+local espsec = visualstab:createsection("Visuals")
 
 lib:notify({
-	title = "crescent",
-	content = "loaded successfully",
+	title = "Crescent",
+	content = "Loaded successfully",
 	duration = 3
 })
