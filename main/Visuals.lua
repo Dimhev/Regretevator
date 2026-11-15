@@ -3,6 +3,7 @@ local plrs = game:GetService("Players")
 local rs = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 local rep = game:GetService("ReplicatedStorage")
+local cs = game:GetService("CollectionService")
 
 local lp = plrs.LocalPlayer
 
@@ -10,6 +11,11 @@ local visuals = {
 	hudenabled = false,
 	notifyfloor = false,
 	notifycallback = nil,
+	coinespenabled = false,
+	coinesptag = "Coin",
+	coinespcolor = Color3.fromRGB(255, 215, 80),
+	cointracked = {},
+	coinconnections = {},
 	connections = {}
 }
 
@@ -46,7 +52,7 @@ local function formattime(seconds)
 end
 
 local function formatbomitimer(seconds)
-	seconds = math.max( math.floor(seconds or 0), 0 )
+	seconds = math.max(math.floor(seconds or 0), 0)
 	local h = math.floor(seconds / 3600)
 	local m = math.floor((seconds % 3600) / 60)
 	local s = seconds % 60
@@ -79,11 +85,21 @@ if oldgui then
 	oldgui:Destroy()
 end
 
+local oldesp = cg:FindFirstChild("crescentcoinesp")
+if oldesp then
+	oldesp:Destroy()
+end
+
 local gui = create("ScreenGui", {
 	Name = "crescenthudgui",
 	Parent = cg,
 	ResetOnSpawn = false,
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+})
+
+local espcontainer = create("Folder", {
+	Name = "crescentcoinesp",
+	Parent = cg
 })
 
 local hudframe = create("Frame", {
@@ -96,6 +112,12 @@ local hudframe = create("Frame", {
 	Visible = false,
 	Parent = gui
 })
+
+local hudscale = create("UIScale", {
+	Scale = 1.35,
+	Parent = hudframe
+})
+
 create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = hudframe })
 create("UIStroke", {
 	Color = thm.crdstk,
@@ -177,18 +199,22 @@ local dragging = false
 local dragstart = nil
 local startpos = nil
 
-hudframe.InputBegan:Connect(function(input)
+table.insert(visuals.connections, hudframe.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
 		dragstart = input.Position
 		startpos = hudframe.Position
-		input.Changed:Connect(function()
+		local endconn
+		endconn = input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
+				if endconn then
+					endconn:Disconnect()
+				end
 			end
 		end)
 	end
-end)
+end))
 
 table.insert(visuals.connections, uis.InputChanged:Connect(function(input)
 	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
@@ -280,6 +306,111 @@ local function setupfloorwatcher()
 end
 task.spawn(setupfloorwatcher)
 
+local function removecoinesp(obj)
+	local data = visuals.cointracked[obj]
+	if not data then
+		return
+	end
+	visuals.cointracked[obj] = nil
+	for _, conn in ipairs(data.conns) do
+		conn:Disconnect()
+	end
+	if data.hl then
+		data.hl:Destroy()
+	end
+	if data.bb then
+		data.bb:Destroy()
+	end
+end
+
+local function addcoinesp(obj)
+	if not visuals.coinespenabled or visuals.cointracked[obj] then
+		return
+	end
+	if not obj:IsDescendantOf(workspace) then
+		return
+	end
+
+	local hl = create("Highlight", {
+		Adornee = obj,
+		FillColor = visuals.coinespcolor,
+		OutlineColor = Color3.fromRGB(255, 255, 255),
+		FillTransparency = 0.4,
+		OutlineTransparency = 0.1,
+		DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
+		Parent = espcontainer
+	})
+
+	local bb = create("BillboardGui", {
+		Adornee = obj,
+		Size = UDim2.new(0, 60, 0, 20),
+		StudsOffset = Vector3.new(0, 1.5, 0),
+		AlwaysOnTop = true,
+		Parent = espcontainer
+	})
+
+	create("TextLabel", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamMedium,
+		Text = "coin",
+		TextColor3 = visuals.coinespcolor,
+		TextStrokeTransparency = 0.2,
+		TextSize = 11,
+		Parent = bb
+	})
+
+	local conns = {}
+	table.insert(conns, obj.Destroying:Connect(function()
+		removecoinesp(obj)
+	end))
+	table.insert(conns, obj.AncestryChanged:Connect(function(_, parent)
+		if not parent or not obj:IsDescendantOf(workspace) then
+			removecoinesp(obj)
+		end
+	end))
+
+	visuals.cointracked[obj] = {
+		hl = hl,
+		bb = bb,
+		conns = conns
+	}
+end
+
+function visuals:togglecoinesp(state)
+	self.coinespenabled = state
+	for _, conn in ipairs(self.coinconnections) do
+		conn:Disconnect()
+	end
+	table.clear(self.coinconnections)
+
+	for obj in pairs(self.cointracked) do
+		removecoinesp(obj)
+	end
+
+	if not state then
+		return
+	end
+
+	table.insert(self.coinconnections, cs:GetInstanceAddedSignal(self.coinesptag):Connect(function(obj)
+		task.defer(addcoinesp, obj)
+	end))
+
+	table.insert(self.coinconnections, cs:GetInstanceRemovedSignal(self.coinesptag):Connect(function(obj)
+		removecoinesp(obj)
+	end))
+
+	for _, obj in ipairs(cs:GetTagged(self.coinesptag)) do
+		addcoinesp(obj)
+	end
+end
+
+function visuals:sethudscale(scale)
+	if hudscale and typeof(scale) == "number" then
+		hudscale.Scale = scale
+	end
+end
+
 function visuals:togglehud(state)
 	self.hudenabled = state
 	hudframe.Visible = state
@@ -289,6 +420,21 @@ function visuals:togglefloornotify(state, callback)
 	self.notifyfloor = state
 	if callback then
 		self.notifycallback = callback
+	end
+end
+
+function visuals:unload()
+	self:togglehud(false)
+	self:togglecoinesp(false)
+	for _, conn in ipairs(self.connections) do
+		conn:Disconnect()
+	end
+	table.clear(self.connections)
+	if gui then
+		gui:Destroy()
+	end
+	if espcontainer then
+		espcontainer:Destroy()
 	end
 end
 
