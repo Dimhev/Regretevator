@@ -2,6 +2,7 @@ local base = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/m
 local lib = loadstring(game:HttpGet(base .. "lib.lua"))()
 local player = loadstring(game:HttpGet(base .. "Player.lua"))()
 local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
+local visuals = loadstring(game:HttpGet(base .. "Visuals.lua"))()
 
 local window = lib:createwindow()
 
@@ -103,6 +104,22 @@ farmsec:createtoggle("Auto Spin GPU", false, function(state)
 end, "Equips GPU and activates it automatically after cooldown")
 
 local espsec = visualstab:createsection("Visuals")
+
+local espsec = visualstab:createsection("Info HUD")
+
+espsec:createtoggle("Info Overlay", false, function(state)
+	visuals:togglehud(state)
+end, "Shows draggable mini-window with floor, timer and BOMi info")
+
+espsec:createtoggle("Notify Next Floor", false, function(state)
+	visuals:togglefloornotify(state, function(floorname)
+		lib:notify({
+			title = "Next Floor",
+			content = "loaded: " .. tostring(floorname),
+			duration = 4
+		})
+	end)
+end, "Notifies you as soon as the next room loads in workspace")
 
 lib:notify({
 	title = "Crescent",
