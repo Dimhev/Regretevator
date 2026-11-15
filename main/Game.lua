@@ -240,7 +240,7 @@ function gamemod:toggleautogpu(state)
 					local bpgpu = bp:FindFirstChild("GenerationProcessingUnit")
 					if bpgpu then
 						hum:EquipTool(bpgpu)
-						task.wait(1.05)
+						task.wait(1.1)
 						gpu = char:FindFirstChild("GenerationProcessingUnit")
 					end
 				end
@@ -250,7 +250,7 @@ function gamemod:toggleautogpu(state)
 				end
 			end
 
-			task.wait(0.15)
+			task.wait(0.85)
 		end
 		self.gpurunning = false
 	end)
