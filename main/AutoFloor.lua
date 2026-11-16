@@ -3,7 +3,7 @@ local plrs = game:GetService("Players")
 local lp = plrs.LocalPlayer
 
 local autofloor = {
-	repourl = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/main/autofloors/",
+	repourl = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/autofloors/",
 	cache = {},
 	utils = {}
 }
