@@ -74,7 +74,7 @@ local function tween(inst, properties, duration)
 end
 
 local function clean(text)
-	return string.lower(tostring(text or ""))
+	return tostring(text or "")
 end
 
 local function finite(value, fallback)
@@ -283,7 +283,13 @@ function crescent:createwindow(cfg)
 	round(topbar, 9)
 	create("Frame", {Position = UDim2.new(0, 0, 1, -9), Size = UDim2.new(1, 0, 0, 9), BackgroundColor3 = thm.tb, Parent = topbar})
 	create("Frame", {Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = thm.line, Parent = topbar})
-	moon(topbar, UDim2.new(0, 18, 0.5, -11), 22)
+	create("ImageLabel", {
+	Position = UDim2.new(0, 18, 0.5, -11),
+	Size = UDim2.fromOffset(22, 22),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://132049320741473",
+	Parent = topbar
+	})
 	local title = label(topbar, clean(cfg.title or "crescent"), 13, thm.text)
 	title.Font = Enum.Font.GothamBold
 	title.Position = UDim2.fromOffset(52, 0)
@@ -316,14 +322,11 @@ function crescent:createwindow(cfg)
 	})
 	create("Frame", {Position = UDim2.new(1, -1, 0, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = thm.line, Parent = sidebar})
 	local tabcontainer = create("ScrollingFrame", {
-		Position = UDim2.fromOffset(10, 16), Size = UDim2.new(1, -21, 1, -68), BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(10, 16), Size = UDim2.new(1, -21, 1, -32), BackgroundTransparency = 1,
 		ScrollBarThickness = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollingDirection = Enum.ScrollingDirection.Y, Parent = sidebar
 	})
 	create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6), Parent = tabcontainer})
-	local userpanel = label(sidebar, clean(lp.Name), 11, thm.mut)
-	userpanel.Position = UDim2.new(0, 18, 1, -37)
-	userpanel.Size = UDim2.new(1, -32, 0, 22)
 	local contentholder = create("Frame", {
 		Position = UDim2.fromOffset(128, 47), Size = UDim2.new(1, -128, 1, -75),
 		BackgroundTransparency = 1, ClipsDescendants = true, Parent = main
@@ -845,7 +848,9 @@ function crescent:createwindow(cfg)
 				end
 				local function choose(preferred)
 					for index, opt in ipairs(options) do
-						if preferred ~= nil and clean(opt) == clean(preferred) then return clean(opt) end
+						if preferred ~= nil and string.lower(clean(opt)) == string.lower(clean(preferred)) then
+						return clean(opt)
+						end
 					end
 					return options[1] ~= nil and clean(options[1]) or "none"
 				end
