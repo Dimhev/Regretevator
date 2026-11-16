@@ -13,6 +13,20 @@ local ignorednames = {
 	["Lobby"] = true
 }
 
+local wintargets = {
+	"WinPart",
+	"WinPoint",
+	"EndPlatform",
+	"ENDBLOCK",
+	"MiddleRing"
+}
+
+local safefloors = {
+	["Dance"] = true,
+	["FourCorners"] = true,
+	["SlimYim"] = true
+}
+
 local function getchar()
 	local char = lp.Character
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -67,29 +81,24 @@ end
 local function findwinpart(room)
 	if not room then return nil end
 
-	local direct = room:FindFirstChild("WinPart") or room:FindFirstChild("WinPoint")
-	if direct then return direct end
-
 	local build = room:FindFirstChild("Build")
-	if build then
-		local bwin = build:FindFirstChild("WinPart") or build:FindFirstChild("WinPoint")
-		if bwin then return bwin end
-	end
 
-	return room:FindFirstChild("WinPart", true) or room:FindFirstChild("WinPoint", true)
-end
-
-local customfloors = {
-	["SLIDE_9999999999_FEET_DOWN_RAINBOW"] = function(room)
-		local build = room:FindFirstChild("Build")
-		local target = build and build:FindFirstChild("Target")
-		local ring = (target and target:FindFirstChild("MiddleRing")) or room:FindFirstChild("MiddleRing", true)
-		if ring then
-			return tp(ring)
+	for _, name in ipairs(wintargets) do
+		local direct = room:FindFirstChild(name) or (build and build:FindFirstChild(name))
+		if direct then
+			return direct
 		end
-		return false
 	end
-}
+
+	for _, name in ipairs(wintargets) do
+		local deep = room:FindFirstChild(name, true)
+		if deep then
+			return deep
+		end
+	end
+
+	return nil
+end
 
 local function getcurrentroom()
 	local values = ws:FindFirstChild("Values")
@@ -108,7 +117,7 @@ local function getcurrentroom()
 
 	for _, child in ipairs(ws:GetChildren()) do
 		if (child:IsA("Model") or child:IsA("Folder")) and not ignorednames[child.Name] and not isplayerchar(child) then
-			if customfloors[child.Name] or findwinpart(child) then
+			if safefloors[child.Name] or findwinpart(child) then
 				return child.Name, child
 			end
 		end
@@ -117,17 +126,32 @@ local function getcurrentroom()
 	return nil, nil
 end
 
+function autofloor:safespot()
+	local elev = ws:FindFirstChild("Elevator")
+	local ceil = elev and elev:FindFirstChild("Ceiling")
+	local concrete = (ceil and ceil:FindFirstChild("Concrete")) or (elev and elev:FindFirstChild("Concrete", true))
+
+	if concrete then
+		if tp(concrete, Vector3.new(0, 4, 0)) then
+			return true, "Teleported to SafeSpot"
+		end
+	end
+
+	return false, "Elevator ceiling not found"
+end
+
 function autofloor:complete()
 	local name, room = getcurrentroom()
 	if not name or not room then
-		return false, "Floor with WinPart not found"
+		return false, "Supported floor not found"
 	end
 
-	if customfloors[name] then
-		if customfloors[name](room) then
-			return true, "Completed: " .. name
+	if safefloors[name] then
+		local ok = self:safespot()
+		if ok then
+			return true, "SafeSpot: " .. name
 		end
-		return false, "Target part not found on: " .. name
+		return false, "Failed to TP to SafeSpot"
 	end
 
 	local win = findwinpart(room)
