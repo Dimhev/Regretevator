@@ -3,6 +3,7 @@ local lib = loadstring(game:HttpGet(base .. "lib.lua"))()
 local player = loadstring(game:HttpGet(base .. "Player.lua"))()
 local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
 local visuals = loadstring(game:HttpGet(base .. "Visuals.lua"))()
+local autofloor = loadstring(game:HttpGet(base .. "AutoFloor.lua"))()
 
 local window = lib:createwindow()
 
@@ -71,6 +72,10 @@ propssec:createtoggle("Disable Red Balls", false, function(state)
 	gamemod:toggleredball(state)
 end, "Destroys red balls and removes collision")
 
+propssec:createtoggle("Disable Mines", false, function(state)
+	gamemod:togglemines(state)
+end, "Disables CanTouch on all mines in Minefield")
+
 propssec:createtoggle("Repel Props", false, function(state)
 	gamemod:togglerepel(state)
 end, "Flings nearby unanchored bananas and red balls away")
@@ -97,13 +102,22 @@ targetsec:createbutton("TP Props Once", function()
 	gamemod:tppropstotarget()
 end, "Teleports all current bananas and red balls to target player")
 
+local floorsec = autofarmtab:createsection("Auto Floor")
+
+floorsec:createbutton("Complete Floor", function()
+	local ok, msg = autofloor:complete()
+	lib:notify({
+		title = ok and "AutoFloor" or "AutoFloor Error",
+		content = tostring(msg),
+		duration = 3
+	})
+end, "Teleports directly inside WinPart or custom floor target")
+
 local farmsec = autofarmtab:createsection("GPU Farm")
 
 farmsec:createtoggle("Auto Spin GPU", false, function(state)
 	gamemod:toggleautogpu(state)
 end, "Equips GPU and activates it automatically after cooldown")
-
-local espsec = visualstab:createsection("Visuals")
 
 local espsec = visualstab:createsection("Info HUD")
 
