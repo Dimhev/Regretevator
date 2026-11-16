@@ -2,11 +2,7 @@ local ws = game:GetService("Workspace")
 local plrs = game:GetService("Players")
 local lp = plrs.LocalPlayer
 
-local autofloor = {
-	repourl = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/autofloors/",
-	cache = {},
-	utils = {}
-}
+local autofloor = {}
 
 local ignorednames = {
 	["Terrain"] = true,
@@ -83,7 +79,7 @@ local function findwinpart(room)
 	return room:FindFirstChild("WinPart", true) or room:FindFirstChild("WinPoint", true)
 end
 
-local simplefloors = {
+local customfloors = {
 	["SLIDE_9999999999_FEET_DOWN_RAINBOW"] = function(room)
 		local build = room:FindFirstChild("Build")
 		local target = build and build:FindFirstChild("Target")
@@ -92,20 +88,7 @@ local simplefloors = {
 			return tp(ring)
 		end
 		return false
-	end,
-
-	["Superhighway"] = function(room)
-		local win = findwinpart(room)
-		if win then
-			return tp(win)
-		end
-		return false
 	end
-}
-
-local complexfloors = {
-	["ComplexMaze"] = "mazefloor.lua",
-	["HardObby"] = "obbyfloor.lua"
 }
 
 local function getcurrentroom()
@@ -125,7 +108,7 @@ local function getcurrentroom()
 
 	for _, child in ipairs(ws:GetChildren()) do
 		if (child:IsA("Model") or child:IsA("Folder")) and not ignorednames[child.Name] and not isplayerchar(child) then
-			if simplefloors[child.Name] or complexfloors[child.Name] or findwinpart(child) then
+			if customfloors[child.Name] or findwinpart(child) then
 				return child.Name, child
 			end
 		end
@@ -134,70 +117,23 @@ local function getcurrentroom()
 	return nil, nil
 end
 
-autofloor.utils.tp = tp
-autofloor.utils.getchar = getchar
-autofloor.utils.getcurrentroom = getcurrentroom
-
-local function loadcomplex(filename)
-	if autofloor.cache[filename] then
-		return autofloor.cache[filename]
-	end
-
-	local ok, src = pcall(function()
-		return game:HttpGet(autofloor.repourl .. filename)
-	end)
-
-	if not ok or type(src) ~= "string" then
-		return nil
-	end
-	
-	local clean = src:gsub("^%s*(.-)%s*$", "%1")
-	if #clean < 10 or clean:sub(1, 3) == "404" then
-		return nil
-	end
-
-	local fn, err = loadstring(clean)
-	if type(fn) ~= "function" then
-		return nil
-	end
-
-	local runok, res = pcall(fn)
-	if runok and type(res) == "function" then
-		autofloor.cache[filename] = res
-		return res
-	end
-
-	return nil
-end
-
 function autofloor:complete()
 	local name, room = getcurrentroom()
 	if not name or not room then
-		return false, "Floor not found or no WinPart"
+		return false, "Floor with WinPart not found"
 	end
 
-	if simplefloors[name] then
-		local ok = simplefloors[name](room)
-		if ok then
+	if customfloors[name] then
+		if customfloors[name](room) then
 			return true, "Completed: " .. name
 		end
-		return false, "Target part missing on: " .. name
+		return false, "Target part not found on: " .. name
 	end
 
-	local complexfile = complexfloors[name]
-	if complexfile then
-		local fn = loadcomplex(complexfile)
-		if fn then
-			task.spawn(fn, room, self.utils)
-			return true, "Running module: " .. name
-		end
-		return false, "Failed to load module: " .. name
-	end
-
-	local genericwin = findwinpart(room)
-	if genericwin then
-		if tp(genericwin) then
-			return true, "Teleported to WinPart (" .. name .. ")"
+	local win = findwinpart(room)
+	if win then
+		if tp(win) then
+			return true, "Completed: " .. name
 		end
 	end
 
