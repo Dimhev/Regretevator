@@ -9,6 +9,7 @@ local trackedbananas = setmetatable({}, { __mode = "k" })
 local gamemod = {
 	nobanana = false,
 	noredball = false,
+	nomines = false,
 	repelprops = false,
 	tpprops = false,
 	autogpu = false,
@@ -26,6 +27,10 @@ end
 
 local function isredball(name)
 	return name == "RedBall"
+end
+
+local function ismine(name)
+	return name == "Mine"
 end
 
 local function istargetprop(name)
@@ -65,11 +70,26 @@ local function disarmparttouch(part)
 	end
 end
 
-local function disarmbanana(item)
+local function disarmobject(item)
 	if not isvalidworldprop(item) then return end
 	disarmparttouch(item)
 	for _, desc in ipairs(item:GetDescendants()) do
 		disarmparttouch(desc)
+	end
+end
+
+local function disarmmines()
+	local mf = ws:FindFirstChild("Minefield")
+	local build = mf and mf:FindFirstChild("Build")
+	local folder = build and build:FindFirstChild("MinesFolder")
+	local mines = folder and folder:FindFirstChild("Mines")
+
+	if mines then
+		for _, item in ipairs(mines:GetChildren()) do
+			if ismine(item.Name) then
+				disarmobject(item)
+			end
+		end
 	end
 end
 
@@ -146,7 +166,7 @@ local function processprop(item)
 	if isbanana(item.Name) then
 		trackedbananas[item] = true
 		if gamemod.nobanana then
-			disarmbanana(item)
+			disarmobject(item)
 		end
 		if gamemod.tpprops then
 			local hrp = gettargethrp()
@@ -197,11 +217,15 @@ local function scanlight()
 	for banana in pairs(trackedbananas) do
 		if isvalidworldprop(banana) then
 			if gamemod.nobanana then
-				disarmbanana(banana)
+				disarmobject(banana)
 			end
 		else
 			trackedbananas[banana] = nil
 		end
+	end
+
+	if gamemod.nomines then
+		disarmmines()
 	end
 end
 
@@ -211,12 +235,19 @@ gamemod.wsaddconn = ws.DescendantAdded:Connect(function(desc)
 	local name = desc.Name
 
 	if name == "TouchInterest" or desc:IsA("TouchTransmitter") then
-		if gamemod.nobanana then
-			local p = desc.Parent
-			if p and (isbanana(p.Name) or (p.Parent and isbanana(p.Parent.Name))) and isvalidworldprop(p) then
+		local p = desc.Parent
+		if p then
+			if gamemod.nobanana and (isbanana(p.Name) or (p.Parent and isbanana(p.Parent.Name))) and isvalidworldprop(p) then
+				task.defer(disarmparttouch, desc)
+			elseif gamemod.nomines and ismine(p.Name) then
 				task.defer(disarmparttouch, desc)
 			end
 		end
+		return
+	end
+
+	if gamemod.nomines and ismine(name) then
+		task.defer(disarmobject, desc)
 		return
 	end
 
@@ -351,6 +382,12 @@ function gamemod:togglebanana(state)
 	self.nobanana = state
 	if not state then return end
 	scanlight()
+end
+
+function gamemod:togglemines(state)
+	self.nomines = state
+	if not state then return end
+	disarmmines()
 end
 
 function gamemod:toggleredball(state)
