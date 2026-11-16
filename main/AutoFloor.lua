@@ -143,11 +143,26 @@ local function loadcomplex(filename)
 		return autofloor.cache[filename]
 	end
 
-	local ok, res = pcall(function()
-		return loadstring(game:HttpGet(autofloor.repourl .. filename))()
+	local ok, src = pcall(function()
+		return game:HttpGet(autofloor.repourl .. filename)
 	end)
 
-	if ok and type(res) == "function" then
+	if not ok or type(src) ~= "string" then
+		return nil
+	end
+	
+	local clean = src:gsub("^%s*(.-)%s*$", "%1")
+	if #clean < 10 or clean:sub(1, 3) == "404" then
+		return nil
+	end
+
+	local fn, err = loadstring(clean)
+	if type(fn) ~= "function" then
+		return nil
+	end
+
+	local runok, res = pcall(fn)
+	if runok and type(res) == "function" then
 		autofloor.cache[filename] = res
 		return res
 	end
