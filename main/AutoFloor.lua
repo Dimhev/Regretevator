@@ -18,7 +18,8 @@ local wintargets = {
 	"WinPoint",
 	"EndPlatform",
 	"ENDBLOCK",
-	"MiddleRing"
+	"MiddleRing",
+	"WinZone"
 }
 
 local safefloors = {
