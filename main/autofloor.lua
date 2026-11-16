@@ -1,3 +1,4 @@
+local ws = game:GetService("Workspace")
 local plrs = game:GetService("Players")
 local lp = plrs.LocalPlayer
 
@@ -5,6 +6,15 @@ local autofloor = {
 	repourl = "https://raw.githubusercontent.com/username/repo/main/autofloors/",
 	cache = {},
 	utils = {}
+}
+
+local ignorednames = {
+	["Terrain"] = true,
+	["Camera"] = true,
+	["Props"] = true,
+	["Values"] = true,
+	["Elevator"] = true,
+	["Lobby"] = true
 }
 
 local function getchar()
@@ -17,8 +27,8 @@ local function getchar()
 end
 
 local function tp(target, offset)
-	local char = getchar()
-	if not char or not target then
+	local char, hrp = getchar()
+	if not char or not hrp or not target then
 		return false
 	end
 
@@ -41,47 +51,55 @@ local function tp(target, offset)
 		elseif typeof(offset) == "CFrame" then
 			targetcf = targetcf * offset
 		end
-		char:PivotTo(targetcf)
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.CFrame = targetcf
 		return true
 	end
 
 	return false
 end
 
-local function getcurrentroom()
-	local values = workspace:FindFirstChild("Values")
-	local curroom = values and values:FindFirstChild("CurrentRoom")
-	if not curroom or not curroom.Value then
-		return nil, nil
+local function isplayerchar(inst)
+	for _, plr in ipairs(plrs:GetPlayers()) do
+		if plr.Character == inst then
+			return true
+		end
 	end
-
-	local val = curroom.Value
-	if typeof(val) == "Instance" then
-		return val.Name, val
-	end
-
-	local name = tostring(val)
-	local model = workspace:FindFirstChild(name)
-	return name, model
+	return false
 end
 
-autofloor.utils.tp = tp
-autofloor.utils.getchar = getchar
-autofloor.utils.getcurrentroom = getcurrentroom
+local function findwinpart(room)
+	if not room then return nil end
+
+	local direct = room:FindFirstChild("WinPart") or room:FindFirstChild("WinPoint")
+	if direct then return direct end
+
+	local build = room:FindFirstChild("Build")
+	if build then
+		local bwin = build:FindFirstChild("WinPart") or build:FindFirstChild("WinPoint")
+		if bwin then return bwin end
+	end
+
+	return room:FindFirstChild("WinPart", true) or room:FindFirstChild("WinPoint", true)
+end
 
 local simplefloors = {
-	["Superhighway"] = function(room)
-		local win = room:FindFirstChild("WinPoint", true)
-		if win then
-			tp(win, Vector3.new(0, 3, 0))
+	["SLIDE_9999999999_FEET_DOWN_RAINBOW"] = function(room)
+		local build = room:FindFirstChild("Build")
+		local target = build and build:FindFirstChild("Target")
+		local ring = (target and target:FindFirstChild("MiddleRing")) or room:FindFirstChild("MiddleRing", true)
+		if ring then
+			return tp(ring)
 		end
+		return false
 	end,
 
-	["AnotherSimpleFloor"] = function(room)
-		local finish = room:FindFirstChild("FinishPart")
-		if finish then
-			tp(finish)
+	["Superhighway"] = function(room)
+		local win = findwinpart(room)
+		if win then
+			return tp(win)
 		end
+		return false
 	end
 }
 
@@ -89,6 +107,36 @@ local complexfloors = {
 	["ComplexMaze"] = "mazefloor.lua",
 	["HardObby"] = "obbyfloor.lua"
 }
+
+local function getcurrentroom()
+	local values = ws:FindFirstChild("Values")
+	local curroom = values and values:FindFirstChild("CurrentRoom")
+	if curroom and curroom.Value then
+		local val = curroom.Value
+		if typeof(val) == "Instance" then
+			return val.Name, val
+		end
+		local name = tostring(val)
+		local model = ws:FindFirstChild(name)
+		if model then
+			return name, model
+		end
+	end
+
+	for _, child in ipairs(ws:GetChildren()) do
+		if (child:IsA("Model") or child:IsA("Folder")) and not ignorednames[child.Name] and not isplayerchar(child) then
+			if simplefloors[child.Name] or complexfloors[child.Name] or findwinpart(child) then
+				return child.Name, child
+			end
+		end
+	end
+
+	return nil, nil
+end
+
+autofloor.utils.tp = tp
+autofloor.utils.getchar = getchar
+autofloor.utils.getcurrentroom = getcurrentroom
 
 local function loadcomplex(filename)
 	if autofloor.cache[filename] then
@@ -110,12 +158,15 @@ end
 function autofloor:complete()
 	local name, room = getcurrentroom()
 	if not name or not room then
-		return false, "no active floor"
+		return false, "Floor not found or no WinPart"
 	end
 
 	if simplefloors[name] then
-		task.spawn(simplefloors[name], room)
-		return true, name
+		local ok = simplefloors[name](room)
+		if ok then
+			return true, "Completed: " .. name
+		end
+		return false, "Target part missing on: " .. name
 	end
 
 	local complexfile = complexfloors[name]
@@ -123,18 +174,19 @@ function autofloor:complete()
 		local fn = loadcomplex(complexfile)
 		if fn then
 			task.spawn(fn, room, self.utils)
-			return true, name
+			return true, "Running module: " .. name
 		end
-		return false, "failed to load module"
+		return false, "Failed to load module: " .. name
 	end
 
-	local genericwin = room:FindFirstChild("WinPoint", true)
+	local genericwin = findwinpart(room)
 	if genericwin then
-		tp(genericwin, Vector3.new(0, 3, 0))
-		return true, name .. " (generic)"
+		if tp(genericwin) then
+			return true, "Teleported to WinPart (" .. name .. ")"
+		end
 	end
 
-	return false, "unsupported floor: " .. tostring(name)
+	return false, "Unsupported floor: " .. tostring(name)
 end
 
 return autofloor
