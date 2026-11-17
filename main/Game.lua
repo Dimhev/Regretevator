@@ -9,11 +9,10 @@ local trackedbananas = setmetatable({}, { __mode = "k" })
 local gamemod = {
 	nobanana = false,
 	noredball = false,
+	nopurpleball = false,
 	nomines = false,
 	repelprops = false,
 	tpprops = false,
-	autogpu = false,
-	gpurunning = false,
 	target = nil,
 	wsaddconn = nil,
 	wsremconn = nil,
@@ -29,12 +28,20 @@ local function isredball(name)
 	return name == "RedBall"
 end
 
+local function ispurpleball(name)
+	return name == "PurpleBall"
+end
+
+local function isball(name)
+	return isredball(name) or ispurpleball(name)
+end
+
 local function ismine(name)
 	return name == "Mine"
 end
 
 local function istargetprop(name)
-	return isbanana(name) or isredball(name)
+	return isbanana(name) or isball(name)
 end
 
 local function isvalidworldprop(item)
@@ -163,7 +170,9 @@ local function processprop(item)
 		return
 	end
 
-	if isbanana(item.Name) then
+	local name = item.Name
+
+	if isbanana(name) then
 		trackedbananas[item] = true
 		if gamemod.nobanana then
 			disarmobject(item)
@@ -183,14 +192,22 @@ local function processprop(item)
 
 	if gamemod.tpprops then
 		local hrp = gettargethrp()
-		if hrp and (isredball(item.Name) or item:IsA("BasePart") or item:FindFirstChildWhichIsA("BasePart", true)) then
+		if hrp and (isball(name) or item:IsA("BasePart") or item:FindFirstChildWhichIsA("BasePart", true)) then
 			teleportitem(item, hrp)
 			return
 		end
 	end
 
-	if isredball(item.Name) then
+	if isredball(name) then
 		if gamemod.noredball then
+			destroyprop(item)
+			return
+		end
+		if gamemod.repelprops then
+			impulseitem(item)
+		end
+	elseif ispurpleball(name) then
+		if gamemod.nopurpleball then
 			destroyprop(item)
 			return
 		end
@@ -278,39 +295,6 @@ gamemod.plrconn = plrs.PlayerRemoving:Connect(function(plr)
 		gamemod.target = nil
 	end
 end)
-
-function gamemod:toggleautogpu(state)
-	self.autogpu = state
-	if not state or self.gpurunning then return end
-
-	self.gpurunning = true
-	task.spawn(function()
-		while self.autogpu do
-			local char = lp and lp.Character
-			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			local bp = lp and lp:FindFirstChild("Backpack")
-
-			if char and hum and hum.Health > 0 and not lp:HasTag("Spectators") then
-				local gpu = char:FindFirstChild("GenerationProcessingUnit")
-				if not gpu and bp then
-					local bpgpu = bp:FindFirstChild("GenerationProcessingUnit")
-					if bpgpu then
-						hum:EquipTool(bpgpu)
-						task.wait(1.1)
-						gpu = char:FindFirstChild("GenerationProcessingUnit")
-					end
-				end
-
-				if gpu and gpu.Parent == char then
-					gpu:Activate()
-				end
-			end
-
-			task.wait(0.85)
-		end
-		self.gpurunning = false
-	end)
-end
 
 function gamemod:settarget(input)
 	local query = tostring(input or ""):gsub("^%s*(.-)%s*$", "%1"):lower()
@@ -404,6 +388,20 @@ function gamemod:toggleredball(state)
 	end
 end
 
+function gamemod:togglepurpleball(state)
+	self.nopurpleball = state
+	if not state then return end
+
+	local props = ws:FindFirstChild("Props")
+	if not props then return end
+
+	for _, item in ipairs(props:GetChildren()) do
+		if ispurpleball(item.Name) then
+			destroyprop(item)
+		end
+	end
+end
+
 function gamemod:togglerepel(state)
 	self.repelprops = state
 	if not state then return end
@@ -428,7 +426,6 @@ end
 
 function gamemod:destroy()
 	self.tpprops = false
-	self.autogpu = false
 	self.target = nil
 
 	if self.wsaddconn then
