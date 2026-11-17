@@ -4,6 +4,7 @@ local player = loadstring(game:HttpGet(base .. "Player.lua"))()
 local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
 local visuals = loadstring(game:HttpGet(base .. "Visuals.lua"))()
 local autofloor = loadstring(game:HttpGet(base .. "AutoFloor.lua"))()
+local autofarm = loadstring(game:HttpGet(base .. "AutoFarm.lua"))()
 
 local window = lib:createwindow()
 
@@ -72,13 +73,17 @@ propssec:createtoggle("Disable Red Balls", false, function(state)
 	gamemod:toggleredball(state)
 end, "Destroys red balls and removes collision")
 
+propssec:createtoggle("Disable Purple Balls", false, function(state)
+	gamemod:togglepurpleball(state)
+end, "Destroys purple balls and removes collision")
+
 propssec:createtoggle("Disable Mines", false, function(state)
 	gamemod:togglemines(state)
 end, "Disables CanTouch on all mines in Minefield")
 
 propssec:createtoggle("Repel Props", false, function(state)
 	gamemod:togglerepel(state)
-end, "Flings nearby unanchored bananas and red balls away")
+end, "Flings nearby bananas, red balls and purple balls away")
 
 local targetsec = funtab:createsection("Target Props")
 
@@ -96,11 +101,11 @@ end, "Auto-completes player name or display name by 2-3 letters")
 
 targetsec:createtoggle("Loop TP Props", false, function(state)
 	gamemod:toggletpprops(state)
-end, "Continuously teleports bananas and red balls to target player")
+end, "Continuously teleports bananas, red and purple balls to target player")
 
 targetsec:createbutton("TP Props Once", function()
 	gamemod:tppropstotarget()
-end, "Teleports all current bananas and red balls to target player")
+end, "Teleports all current bananas, red and purple balls to target player")
 
 local floorsec = autofarmtab:createsection("Auto Floor")
 
@@ -113,10 +118,36 @@ floorsec:createbutton("Complete Floor", function()
 	})
 end, "Teleports directly inside WinPart or custom floor target")
 
+floorsec:createbutton("Elevator SafeSpot", function()
+	local ok, msg = autofloor:safespot()
+	lib:notify({
+		title = ok and "SafeSpot" or "SafeSpot Error",
+		content = tostring(msg),
+		duration = 2
+	})
+end, "Teleports on top of workspace.Elevator.Ceiling.Concrete")
+
+local farmfloorsec = autofarmtab:createsection("Floors")
+
+farmfloorsec:createtoggle("Auto Farm Bugbo Rocks", false, function(state)
+	autofarm:togglebugborocks(state)
+end, "Automatically teleports to Rocks on bugbo floor and triggers PickUpRock")
+
+farmfloorsec:createbutton("Farm Bugbo Rocks Once", function()
+	task.spawn(function()
+		local ok, msg = autofarm:farmbugboonce()
+		lib:notify({
+			title = ok and "Bugbo Farm" or "Bugbo Farm Error",
+			content = tostring(msg),
+			duration = 3
+		})
+	end)
+end, "Collects all rocks on bugbo floor right now")
+
 local farmsec = autofarmtab:createsection("GPU Farm")
 
 farmsec:createtoggle("Auto Spin GPU", false, function(state)
-	gamemod:toggleautogpu(state)
+	autofarm:toggleautogpu(state)
 end, "Equips GPU and activates it automatically after cooldown")
 
 local espsec = visualstab:createsection("Info HUD")
