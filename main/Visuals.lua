@@ -8,6 +8,7 @@ local cs = game:GetService("CollectionService")
 local lp = plrs.LocalPlayer
 
 local visuals = {
+	unloaded = false,
 	hudenabled = false,
 	notifyfloor = false,
 	notifycallback = nil,
@@ -206,10 +207,11 @@ table.insert(visuals.connections, hudframe.InputBegan:Connect(function(input)
 		startpos = hudframe.Position
 		local endconn
 		endconn = input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
+			if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
 				dragging = false
 				if endconn then
 					endconn:Disconnect()
+					endconn = nil
 				end
 			end
 		end)
@@ -232,17 +234,24 @@ local cachedbomi = nil
 local lastbomicheck = 0
 
 local function updatebomi()
-	if not BomiSpawnShared or not ServerTime then
+	if not BomiSpawnShared or not ServerTime or type(ServerTime.Now) ~= "function" then
 		bomival.Text = "unavailable"
 		return
 	end
-	local now = ServerTime.Now()
+
+	local timeok, now = pcall(ServerTime.Now)
+	if not timeok or type(now) ~= "number" then
+		bomival.Text = "unavailable"
+		return
+	end
+
 	if not cachedbomi or now >= (cachedbomi.MoveTimestamp or 0) or (tick() - lastbomicheck > 5) then
 		lastbomicheck = tick()
 		pcall(function()
 			cachedbomi = BomiSpawnShared.GetBomiSpawnForPlayer(lp)
 		end)
 	end
+
 	if cachedbomi then
 		local fname = string.lower(tostring(cachedbomi.FloorProperName or cachedbomi.FloorName or "unknown"))
 		local rem = formatbomitimer((cachedbomi.MoveTimestamp or now) - now)
@@ -261,7 +270,7 @@ table.insert(visuals.connections, rs.RenderStepped:Connect(function()
 
 	local srvnow = workspace:GetServerTimeNow()
 	local floorend = workspace:GetAttribute("FloorTimestampEnd")
-	if floorend and floorend > srvnow then
+	if type(floorend) == "number" and floorend > srvnow then
 		timerval.Text = formattime(floorend - srvnow)
 		timerval.TextColor3 = thm.txtpri
 	else
@@ -272,14 +281,16 @@ table.insert(visuals.connections, rs.RenderStepped:Connect(function()
 	local char = lp.Character
 	local mgstart = char and char:GetAttribute("MinigameTimestampStart")
 	local mgend = char and char:GetAttribute("MinigameTimestampEnd")
-	if mgstart or mgend then
+	local hasstart = type(mgstart) == "number"
+	local hasend = type(mgend) == "number"
+	if hasstart or hasend then
 		swrow.Visible = true
 		local mgtime = 0
-		if mgstart and mgend then
+		if hasstart and hasend then
 			mgtime = mgend - mgstart
-		elseif mgend then
+		elseif hasend then
 			mgtime = mgend - srvnow
-		elseif mgstart then
+		elseif hasstart then
 			mgtime = srvnow - mgstart
 		end
 		swval.Text = formattime(mgtime)
@@ -292,7 +303,9 @@ end))
 
 local function setupfloorwatcher()
 	local values = workspace:WaitForChild("Values", 10)
+	if visuals.unloaded then return end
 	local curroom = values and values:WaitForChild("CurrentRoom", 10)
+	if visuals.unloaded then return end
 	if curroom then
 		table.insert(visuals.connections, curroom:GetPropertyChangedSignal("Value"):Connect(function()
 			if visuals.notifyfloor and visuals.notifycallback then
@@ -424,6 +437,8 @@ function visuals:togglefloornotify(state, callback)
 end
 
 function visuals:unload()
+	self.unloaded = true
+	dragging = false
 	self:togglehud(false)
 	self:togglecoinesp(false)
 	for _, conn in ipairs(self.connections) do
@@ -437,5 +452,7 @@ function visuals:unload()
 		espcontainer:Destroy()
 	end
 end
+
+visuals.destroy = visuals.unload
 
 return visuals
