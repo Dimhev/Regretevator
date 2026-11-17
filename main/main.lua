@@ -1,10 +1,52 @@
 local base = "https://raw.githubusercontent.com/Dimhev/Regretevator/refs/heads/main/main/"
-local lib = loadstring(game:HttpGet(base .. "lib.lua"))()
-local player = loadstring(game:HttpGet(base .. "Player.lua"))()
-local gamemod = loadstring(game:HttpGet(base .. "Game.lua"))()
-local visuals = loadstring(game:HttpGet(base .. "Visuals.lua"))()
-local autofloor = loadstring(game:HttpGet(base .. "AutoFloor.lua"))()
-local autofarm = loadstring(game:HttpGet(base .. "AutoFarm.lua"))()
+
+local function loadmodule(file)
+	local ok, src = pcall(function()
+		return game:HttpGet(base .. file)
+	end)
+	if not ok or type(src) ~= "string" or #src < 5 then
+		warn("[Crescent] Failed to fetch: " .. tostring(file))
+		return nil
+	end
+
+	local fn, err = loadstring(src)
+	if type(fn) ~= "function" then
+		warn("[Crescent] Syntax error in " .. tostring(file) .. ": " .. tostring(err))
+		return nil
+	end
+
+	local runok, res = pcall(fn)
+	if not runok then
+		warn("[Crescent] Runtime error in " .. tostring(file) .. ": " .. tostring(res))
+		return nil
+	end
+
+	return res
+end
+
+local env = (type(getgenv) == "function" and getgenv()) or _G
+if env.CrescentCleanup then
+	pcall(env.CrescentCleanup)
+end
+
+local lib = loadmodule("lib.lua")
+local player = loadmodule("Player.lua")
+local gamemod = loadmodule("Game.lua")
+local visuals = loadmodule("Visuals.lua")
+local autofloor = loadmodule("AutoFloor.lua")
+local autofarm = loadmodule("AutoFarm.lua")
+
+if not (lib and player and gamemod and visuals and autofloor and autofarm) then
+	warn("[Crescent] Initialization aborted: one or more modules failed to load")
+	return
+end
+
+env.CrescentCleanup = function()
+	if player and player.destroy then pcall(player.destroy, player) end
+	if gamemod and gamemod.destroy then pcall(gamemod.destroy, gamemod) end
+	if autofarm and autofarm.destroy then pcall(autofarm.destroy, autofarm) end
+	if visuals and visuals.destroy then pcall(visuals.destroy, visuals) end
+end
 
 local window = lib:createwindow()
 
@@ -17,28 +59,24 @@ local visualstab = window:createtab("Visuals")
 local movesec = playertab:createsection("Movement")
 local charsec = playertab:createsection("Character")
 
-movesec:createslider("WalkSpeed", 16, 120, 16, function(val)
-	player:setwalkspeed(val)
-end, "Sets and auto locks WalkSpeed when above 16")
-
-movesec:createtextbox("Custom WalkSpeed", "16 - 120", "16", function(val)
-	local num = tonumber(val)
-	if num then
-		player:setwalkspeed(num)
-	end
-end, "Type exact WalkSpeed value")
-
 movesec:createtoggle("SpeedBoost", false, function(state)
 	player:togglespeedboost(state)
-end, "CFrame movement boost without touching WalkSpeed")
+end, "Physics-based horizontal velocity boost without clipping through walls")
 
 movesec:createslider("Boost Power", 1, 80, 15, function(val)
 	player:setspeedboost(val)
-end, "Extra movement speed multiplier")
+end, "Extra horizontal speed added to base movement (1 - 80)")
+
+movesec:createtextbox("Custom Boost Power", "1 - 80", "15", function(val)
+	local num = tonumber(val)
+	if num then
+		player:setspeedboost(num)
+	end
+end, "Type exact Boost Power value")
 
 charsec:createslider("JumpPower", 50, 250, 50, function(val)
 	player:setjumppower(val)
-end, "Sets and auto locks JumpPower when above 50")
+end, "Sets and locks JumpPower when above 50 (restores default at 50)")
 
 charsec:createtextbox("Custom JumpPower", "50 - 250", "50", function(val)
 	local num = tonumber(val)
@@ -61,7 +99,7 @@ end, "Jump mid-air with safe cooldown")
 
 charsec:createtoggle("Noclip", false, function(state)
 	player:togglenoclip(state)
-end, "Walk through walls and obstacles")
+end, "Walk through walls and restore exact collisions when disabled")
 
 local propssec = gametab:createsection("Props Protection")
 
