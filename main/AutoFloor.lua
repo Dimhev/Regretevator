@@ -19,7 +19,7 @@ local wintargets = {
     "EndPlatform",
     "ENDBLOCK",
     "MiddleRing",
-    "WinZone",
+    "IcecreamGiver",
     "WinPool"
 }
 
